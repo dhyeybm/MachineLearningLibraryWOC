@@ -1,10 +1,5 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
-"""
-Created on Sat Dec 15 12:52:16 2018
-
-@author: nisargbm
-"""
 
 import numpy as np
 import pandas as pd
@@ -31,23 +26,21 @@ class LinearRegression:
         alpha=0.1
         #m = y_norm.shape[0]
         for i in range(0,iterations):
-            h=np.dot(x_norm,theta)
-            theta=theta-alpha*(np.dot(np.transpose(x_norm),h-y_norm)/(2*self.m))
+            h = np.dot(x_norm,theta)
+            theta = theta - alpha * (np.dot(np.transpose(x_norm),h-y_norm) / (2*self.m))
         return theta
     
     def calc_normalization_params(self, val):
-        mean=np.mean(val,axis=0)
-        std_dev=np.std(val,axis=0)
+        mean = np.mean(val, axis = 0)
+        std_dev = np.std(val, axis = 0)
         return mean, std_dev
     
     def normalization(self, val, mean, std_dev):
-        val = (val-mean)/std_dev
+        val = (val - mean) / std_dev
         return val
     
     def denormalize(self, val, mean, std_dev):
         return (val * std_dev) + mean
-    
-     
     
     def linear_regression(self, x_train, y_train): 
         self.x_mean, self.x_std = self.calc_normalization_params(x_train)
@@ -56,19 +49,19 @@ class LinearRegression:
         y_norm = self.normalization(y_train, self.y_mean, self.y_std)
         self.m = x_norm.shape[0]
         self.n = x_norm.shape[1]
-        ones = np.ones((self.m,1),dtype = int)
-        x_norm = np.hstack((ones,x_norm))
-        theta = np.zeros(((self.n)+1,1),dtype=int)
-        J = self.cost(x_norm,y_norm,theta)
+        ones = np.ones((self.m, 1),dtype = int)
+        x_norm = np.hstack((ones, x_norm))
+        theta = np.zeros(((self.n) + 1, 1),dtype = int)
+        J = self.cost(x_norm, y_norm, theta)
         iterations = 1000
-        self.theta = self.descent(theta,iterations,x_norm,y_norm)
+        self.theta = self.descent(theta, iterations, x_norm, y_norm)
         
-    def predict(self,x_test):
+    def predict(self, x_test):
         x_test_norm = self.normalization(x_test, self.x_mean, self.x_std)
         m = x_test_norm.shape[0]
-        ones = np.ones((m,1),dtype = int)
-        x_test_norm = np.hstack((ones,x_test_norm))
-        y_pred=np.dot(x_test_norm, self.theta)
+        ones = np.ones((m, 1), dtype = int)
+        x_test_norm = np.hstack((ones, x_test_norm))
+        y_pred = np.dot(x_test_norm, self.theta)
         y_pred_denormalized = self.denormalize(y_pred, self.y_mean, self.y_std)
         return y_pred_denormalized
 
