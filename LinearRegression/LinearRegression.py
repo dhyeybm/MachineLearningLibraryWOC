@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-import pandas as pd
+
 class LinearRegression:
     
     theta = None
@@ -12,22 +12,24 @@ class LinearRegression:
     x_std = None
     m = None
     n = None
-    #def __init__(self):
-        #self.theta=theta
+    alpha = None
+    iterations = None
     
-    def cost(self,x_norm,y_norm,theta):
-        #m = y_norm.shape[0]
-        h = np.dot(x_norm,theta)
+    def __init__(self,alpha = 0.1,iterations = 1000):
+        self.alpha = alpha
+        self.iterations = iterations
+        
+    def cost(self,x_norm,y_norm,h,theta):
         J_numerator = np.power(h-y_norm,2).sum()
         J = J_numerator / (2*self.m)
-        return J
+        grad = np.dot(np.transpose(x_norm),h-y_norm)
+        return J,grad
     
-    def descent(self,theta,iterations,x_norm,y_norm):
-        alpha=0.1
-        #m = y_norm.shape[0]
+    def descent(self,theta,alpha,iterations,x_norm,y_norm):
         for i in range(0,iterations):
             h = np.dot(x_norm,theta)
-            theta = theta - alpha * (np.dot(np.transpose(x_norm),h-y_norm) / (2*self.m))
+            J,grad = self.cost(x_norm,y_norm,h,theta)
+            theta = theta - alpha * (grad / (self.m))
         return theta
     
     def calc_normalization_params(self, val):
@@ -52,9 +54,7 @@ class LinearRegression:
         ones = np.ones((self.m, 1),dtype = int)
         x_norm = np.hstack((ones, x_norm))
         theta = np.zeros(((self.n) + 1, 1),dtype = int)
-        J = self.cost(x_norm, y_norm, theta)
-        iterations = 1000
-        self.theta = self.descent(theta, iterations, x_norm, y_norm)
+        self.theta = self.descent(theta, self.alpha , self.iterations, x_norm, y_norm)
         
     def predict(self, x_test):
         x_test_norm = self.normalization(x_test, self.x_mean, self.x_std)
