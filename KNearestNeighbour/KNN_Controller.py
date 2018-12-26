@@ -29,19 +29,14 @@ def plot_func(x,y,x_label,y_label):
     plt.show()
 plot_func(x_train,y_train,"Trained X","Trained Y")
 plot_func(x_test,y_test,"Test X","Test Y" )
-obj = KNearestNeighbour(k = 101)
+obj = KNearestNeighbour(k = 13)
 correct = 0
-wrong = 0
-print ("Predicted    Y_Test")
-for i in range(np.shape(x_test)[0]):   
-    predicted = obj.predict(x_train,y_train,x_test[i])
-    print (str(predicted) + "            " + str(y_test[i]))
-    if(predicted == y_test[i]):
-        correct += 1
-    else:
-        wrong +=1
-accuracy = correct * 100 / (correct + wrong)
-print("Accuracy = " + str(accuracy)+"%")
+wrong = 0   
+predicted = obj.predict(x_train,y_train,x_test)
+print (predicted)
+acc = obj.accuracy(x_train,y_train,x_test,y_test)
+print(acc)
+
 
 
 

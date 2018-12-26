@@ -40,12 +40,28 @@ class KNearestNeighbour:
         return dist_y
             
     def predict(self,x,y,x_test):
-        dist_y = self.get_sort_arr(x,y,x_test)
-        k_nearest = dist_y[0:self.k,1:] 
-        k_nearest = (k_nearest.flatten()).astype(int)
-        k_count = np.bincount(k_nearest[:])
-        prediction = np.argmax(k_count)
+        prediction = np.zeros((x_test.shape[0]),dtype = int)
+        for i in range(x_test.shape[0]):
+            dist_y = self.get_sort_arr(x,y,x_test[i])
+            k_nearest = dist_y[0:self.k,1:] 
+            k_nearest = (k_nearest.flatten()).astype(int)
+            k_count = np.bincount(k_nearest[:])
+            predict_val = np.argmax(k_count)
+            prediction[i] = predict_val
         return prediction
     
+    def accuracy(self,x,y,x_test,y_test):
+        prediction = self.predict(x,y,x_test)
+        correct = 0
+        wrong = 0
+        for i in range(x_test.shape[0]):
+            if prediction[i]==y_test[i]:
+                correct +=1
+            else:
+                wrong+=1
+        acc = (correct * 100)/(correct + wrong)
+        return acc
+    
+            
  
         
