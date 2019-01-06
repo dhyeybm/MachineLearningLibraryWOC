@@ -1,52 +1,23 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-
-def load_data(file_name):
-    data = pd.read_csv(file_name,sep = ',')
-    data = data.values
-    return data
-data = load_data('Outlier.txt')
-np.random.shuffle(data)
-x_train = data[0:int(data.shape[0]*0.6) , 0:(data.shape[1]-1)]
-y_train = data[0:int(data.shape[0]*0.6) , (data.shape[1]-1):]
-x_test = data[int(data.shape[0]*0.6) : ,0:(data.shape[1]-1)]
-y_test = data[int(data.shape[0]*0.6) : ,(data.shape[1]-1):]
-def plot_func(x,y,x_label,y_label):
-    for i in range(x.shape[0]):
-        
-        if y[i,:]==0:
-            plt.scatter(x[i,0],x[i,1],color='red')
-        elif y[i,:]==1:
-            plt.scatter(x[i,0],x[i,1],color='blue')
-        elif y[i,:]==2:
-            plt.scatter(x[i,0],x[i,1],color='green')
-        else:
-            plt.scatter(x[i,0],x[i,1],color='yellow')
-    plt.xlabel(x_label)
-    plt.ylabel(y_label)
-    plt.show()
-plot_func(x_train,y_train,"Trained X","Trained Y")
-plot_func(x_test,y_test,"Test X","Test Y" )
 
 class NNGeneralize:
 
     Theta = None
-    n = 0
     
-    def __init__(self,iterations = 1000,alpha = 0.3,labels = [5,2,3]):
+    def __init__(self,iterations = 1000,alpha = 0.03,labels = [5,2,3]):
         self.iterations = iterations
         self.alpha = alpha
         self.labels = labels
+        self.n = len(self.labels) + 2
     
     def initialize_Theta(self):
         Theta = []
         for i in range(self.n-1):
-            rand_matrix = np.random.rand(self.labels[i+1],self.labels[i]+1)
-            Theta.append(rand_matrix)   
+            rand_matrix = (np.random.rand(self.labels[i+1],self.labels[i]+1)) 
+            Theta.append(rand_matrix)
         return Theta
     
     def normalize(self,x):
@@ -57,7 +28,10 @@ class NNGeneralize:
         a = 1/(1+(np.exp(-1*z)))
         return a
     
-    
+    def sigmoid_gradient(self,a):
+        sig_grad = a *(1-a)
+        return sig_grad
+   
     def unroll(self,Theta):
         theta_unrolled = np.array([])
         for i in range(self.n-1):
@@ -80,15 +54,11 @@ class NNGeneralize:
     def forward_prop(self,x_train_norm,Theta):
         a = [x_train_norm]
         m = x_train_norm.shape[0]
-        print(self.labels)
-        print(Theta)
         a[0] = np.hstack((np.ones((m,1)),a[0]))
-        for i in range(1,2):
-            print(np.dot(a[i-1],np.transpose(Theta[i-1])))
-            a.append(self.sigmoid(np.dot(a[i-1],np.transpose(Theta[i-1]))))
-            print(a[1])
+        for i in range(1,self.n):
+            z = np.dot(a[i-1],np.transpose(Theta[i-1]))
+            a.append(self.sigmoid(z))
             a[i] = np.hstack((np.ones((m,1)),a[i]))
-            #print(a)
         return a
     
     
@@ -104,60 +74,49 @@ class NNGeneralize:
             y_matrix[i,int(y_train[i])] = 1
         delta[self.n-1] = (a[self.n-1])[:,1:] - y_matrix 
         for i in range(self.n-2,0,-1):
-            delta[i] = np.dot(delta[i+1],Theta[i])
+            delta[i] = (np.dot(delta[i+1],Theta[i]))*self.sigmoid_gradient(a[i])
             delta[i] = (delta[i])[:,1:]
         for i in range(self.n-1):
             gradient.append(np.dot(np.transpose(delta[i+1]),a[i])/m)
             grad_flat = np.reshape(gradient[i],(gradient[i].size,1))
             gradient_unrolled = np.append(gradient_unrolled,grad_flat)
-            gradient_unrolled = gradient_unrolled/m
+            gradient_unrolled = gradient_unrolled
         return gradient_unrolled
     
-    def gradient_descent(self,x_train_norm,theta_unrolled,iterations,alpha):
+    def gradient_descent(self,x_train_norm,y_train,theta_unrolled,iterations,alpha):
         for i in range(iterations):
+            if(i%100 == 0):
+                print("Iterations = " + str(i))
             gradient_unrolled = self.cost_func(x_train_norm,y_train,theta_unrolled)
             theta_unrolled = theta_unrolled - (self.alpha * gradient_unrolled)
-            #print(str(theta_unrolled[9]) + "         " + str(gradient_unrolled[9]))
         Theta = self.get_params(theta_unrolled)
-        #print(Theta)
         return Theta
     
     def max_freq(self,prob_matrix):
         predict = np.argmax(prob_matrix,axis = 1)
         return predict
-                
+            
     def neural_network(self,x_train,y_train):
        self.labels = [x_train.shape[1]] + self.labels + [len(np.unique(y_train))]
-       self.n = len(self.labels)
        self.Theta = self.initialize_Theta()
        x_train_norm = self.normalize(x_train)
        theta_unrolled = self.unroll(self.Theta)
-       self.Theta = self.gradient_descent(x_train_norm,theta_unrolled,self.iterations,self.alpha)
-       #print(self.Theta)
+       self.Theta = self.gradient_descent(x_train_norm,y_train,theta_unrolled,self.iterations,self.alpha)
        
     def prediction(self,x_test,y_test):
         x_test_norm = self.normalize(x_test)
-        #print(self.Theta)
         nn_matrix = self.forward_prop(x_test_norm,self.Theta) 
         prob_matrix = nn_matrix[self.n-1]
         prob_matrix = prob_matrix[:,1:]
         predict = self.max_freq(prob_matrix)
-        #print(prob_matrix)
         return predict
     
-
-
-obj = NNGeneralize(alpha = 0.5)
-obj.neural_network(x_train,y_train)
-predict = obj.prediction(x_test,y_test)
-print()
-print(predict)
-correct = 0.0
-wrong = 0.0
-for i in range(x_test.shape[0]):
-
-    if y_test[i]==predict[i]:
-        correct +=1
-    else:
-        wrong+=1
-print(correct*100/(correct+wrong))
+    def accuracy(self,y_test,predict): 
+        correct = 0
+        wrong = 0
+        for i in range(y_test.shape[0]):
+            if y_test[i]==predict[i]:
+                correct +=1
+            else:
+                wrong+=1
+        return (correct*100/(correct+wrong))   
